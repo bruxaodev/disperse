@@ -2,54 +2,52 @@ use std::ops::Sub;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    Addr, BankMsg, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, Uint128,
-};
+use cosmwasm_std::{Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::{self, State, STATE};
+use crate::state::{State, STATE};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:disperse";
+const CONTRACT_NAME: &str = "crates.io:dispersei";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
+    _info: MessageInfo,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let state: State = State {
-        admin: info.sender.clone(),
+        admin: _info.sender.clone(),
     };
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    STATE.save(deps.storage, &state)?;
+    set_contract_version(_deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    STATE.save(_deps.storage, &state)?;
 
     Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
+    _info: MessageInfo,
+    _msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::Disperse { accounts, amounts } => disperse(deps, info, accounts, amounts),
+    match _msg {
+        ExecuteMsg::Disperse { accounts, amounts } => disperse(_info, accounts, amounts),
         ExecuteMsg::DisperseSameValue { accounts, amount } => {
-            disperse_same_value(deps, info, accounts, amount)
+            disperse_same_value(_info, accounts, amount)
         }
-        ExecuteMsg::WithdrawFunds { amount } => withdraw_funds(deps, info, amount),
+        ExecuteMsg::WithdrawFunds { amount } => withdraw_funds(_deps, _info, amount),
+        ExecuteMsg::UpdateAdmin { new_admin } => update_admin(_info, _deps, new_admin),
     }
 }
 
 pub fn disperse(
-    deps: DepsMut,
-    info: MessageInfo,
+    _info: MessageInfo,
     accounts: Vec<Addr>,
     amounts: Vec<Coin>,
 ) -> Result<Response, ContractError> {
@@ -69,6 +67,20 @@ pub fn disperse(
         let cosmos_msg: CosmosMsg = CosmosMsg::Bank(msg);
         messages.push(cosmos_msg);
     }
+
+    let remaining = Uint128::new(_info.funds[0].amount.u128()).sub(total_amount_to_disperse);
+    if !remaining.is_zero() {
+        let refund = BankMsg::Send {
+            to_address: _info.sender.into_string(),
+            amount: vec![Coin {
+                denom: _info.funds[0].denom.clone(),
+                amount: remaining,
+            }],
+        };
+
+        messages.push(CosmosMsg::Bank(refund))
+    }
+
     let response: Response = Response::new()
         .add_messages(messages)
         .add_attribute("action", "disperse");
@@ -77,8 +89,7 @@ pub fn disperse(
 }
 
 pub fn disperse_same_value(
-    deps: DepsMut,
-    info: MessageInfo,
+    _info: MessageInfo,
     accounts: Vec<Addr>,
     amount: Coin,
 ) -> Result<Response, ContractError> {
@@ -94,6 +105,19 @@ pub fn disperse_same_value(
         messages.push(cosmos_msg);
     }
 
+    let remaining = Uint128::new(_info.funds[0].amount.u128()).sub(total_amount_to_disperse);
+    if !remaining.is_zero() {
+        let refund = BankMsg::Send {
+            to_address: _info.sender.into_string(),
+            amount: vec![Coin {
+                denom: _info.funds[0].denom.clone(),
+                amount: remaining,
+            }],
+        };
+
+        messages.push(CosmosMsg::Bank(refund))
+    }
+
     let response: Response = Response::new()
         .add_messages(messages)
         .add_attribute("action", "disperse");
@@ -107,12 +131,21 @@ pub fn withdraw_funds(
     amount: Vec<BankMsg>,
 ) -> Result<Response, ContractError> {
     let state: State = STATE.load(deps.storage)?;
-    if info.sender != state.admin {
-        return Err(ContractError::Unauthorized {});
-    }
+
+    state.only_admin(&info.sender)?;
 
     let response: Response = Response::new()
         .add_messages(amount)
         .add_attribute("action", "withdraw_funds");
     Ok(response)
+}
+
+pub fn update_admin(
+    _info: MessageInfo,
+    deps: DepsMut,
+    new_admin: Addr,
+) -> Result<Response, ContractError> {
+    let mut state: State = STATE.load(deps.storage)?;
+    state.set_admin(deps, _info, &new_admin)?;
+    Ok(Response::default())
 }
