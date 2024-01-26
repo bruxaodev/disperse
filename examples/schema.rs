@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use dispersei::msg::{ ExecuteMsg, InstantiateMsg, QueryMsg};
+use dispersei::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use dispersei::state::State;
 
 fn main() {

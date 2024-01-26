@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, BankMsg};
+use cosmwasm_std::{Addr, BankMsg, Coin};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

@@ -23,10 +23,15 @@ impl State {
         Ok(())
     }
 
-    pub fn set_admin(&mut self,_deps: DepsMut, _info: MessageInfo, new_admin: &Addr) -> Result<(), ContractError> {
+    pub fn set_admin(
+        &mut self,
+        _deps: DepsMut,
+        _info: MessageInfo,
+        new_admin: &Addr,
+    ) -> Result<(), ContractError> {
         self.only_admin(&_info.sender)?;
-        let mut state= STATE.load(_deps.storage)?;
-        state.admin =new_admin.clone();
+        let mut state = STATE.load(_deps.storage)?;
+        state.admin = new_admin.clone();
         STATE.save(_deps.storage, &state)?;
         Ok(())
     }
