@@ -1,0 +1,68 @@
+[
+    {
+        "message": " 1sei == 1000000usei"
+    },
+    {
+        "withdraw_funds": {
+            "accounts": [
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl"
+            ],
+            "amounts": [
+                {
+                    "denom": "usei",
+                    "amount": "100000"
+                }
+            ]
+        }
+    },
+    {
+        "disperse_same_value": {
+            "accounts": [
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl"
+            ],
+            "amount": "100000"
+        }
+    },
+    {
+        "disperse": {
+            "accounts": [
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl",
+                "sei1tn739lnrar046xmsxmransl3c3xpx90zguxeyl"
+            ],
+            "amounts": [
+                "100000",
+                "100000",
+                "100000",
+                "100000",
+                "100000",
+                "100000",
+                "100000",
+                "100000",
+                "100000",
+                "100000"
+            ]
+        }
+    },
+    {
+        "update_admin": {
+            "new_admin": "sei1s69vsnf7939glvtaq859xk5ngkkra7mqv6349z"
+        }
+    }
+]

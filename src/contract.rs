@@ -41,7 +41,7 @@ pub fn execute(
         ExecuteMsg::DisperseSameValue { accounts, amount } => {
             disperse_same_value(_info, accounts, amount)
         }
-        ExecuteMsg::WithdrawFunds { amount } => withdraw_funds(_deps, _info, amount),
+        ExecuteMsg::WithdrawFunds { accounts, amounts } => withdraw_funds(_deps, _info, accounts, amounts),
         ExecuteMsg::UpdateAdmin { new_admin } => update_admin(_info, _deps, new_admin),
     }
 }
@@ -49,25 +49,26 @@ pub fn execute(
 pub fn disperse(
     _info: MessageInfo,
     accounts: Vec<Addr>,
-    amounts: Vec<Coin>,
+    amounts: Vec<Uint128>,
 ) -> Result<Response, ContractError> {
     if accounts.len() != amounts.len() {
         return Err(ContractError::InvalidInput {
             reason: "Number of accounts and amounts do not match".to_string(),
         });
     }
-    let mut total_amount_to_disperse = Uint128::zero();
+
     let mut messages: Vec<CosmosMsg> = Vec::new();
-    for (account, amount) in accounts.into_iter().zip(amounts.into_iter()) {
-        total_amount_to_disperse += amount.amount;
+    for (account, amount) in accounts.into_iter().zip(amounts.clone().into_iter()) {
         let msg: BankMsg = BankMsg::Send {
             to_address: account.into_string(),
-            amount: vec![amount],
+            amount: vec![Coin::new(amount.u128(), _info.funds[0].denom.clone())]
         };
         let cosmos_msg: CosmosMsg = CosmosMsg::Bank(msg);
         messages.push(cosmos_msg);
     }
 
+
+    let total_amount_to_disperse: Uint128 = amounts.clone().iter().sum();
     let remaining = Uint128::new(_info.funds[0].amount.u128()).sub(total_amount_to_disperse);
     if !remaining.is_zero() {
         let refund = BankMsg::Send {
@@ -91,15 +92,18 @@ pub fn disperse(
 pub fn disperse_same_value(
     _info: MessageInfo,
     accounts: Vec<Addr>,
-    amount: Coin,
+    amount: Uint128,
 ) -> Result<Response, ContractError> {
-    let mut total_amount_to_disperse = Uint128::zero();
     let mut messages: Vec<CosmosMsg> = Vec::new();
+    let mut total_amount_to_disperse: Uint128 = Uint128::zero();
     for account in accounts {
-        total_amount_to_disperse += amount.amount;
+        total_amount_to_disperse += amount;
         let msg: BankMsg = BankMsg::Send {
             to_address: account.into_string(),
-            amount: vec![amount.clone()],
+            amount: vec![Coin{
+                denom: _info.funds[0].denom.clone(),
+                amount: amount
+            }]
         };
         let cosmos_msg: CosmosMsg = CosmosMsg::Bank(msg);
         messages.push(cosmos_msg);
@@ -128,14 +132,22 @@ pub fn disperse_same_value(
 pub fn withdraw_funds(
     deps: DepsMut,
     info: MessageInfo,
-    amount: Vec<BankMsg>,
+    accounts: Vec<Addr>,
+    amounts: Vec<Coin>,
 ) -> Result<Response, ContractError> {
     let state: State = STATE.load(deps.storage)?;
-
     state.only_admin(&info.sender)?;
+    let mut messages: Vec<CosmosMsg> = Vec::new();
+    for (account, amount) in accounts.into_iter().zip(amounts.into_iter()){
+        let msg = BankMsg::Send {
+            to_address: account.into_string(),
+            amount: vec![amount]
+        };
+        messages.push(CosmosMsg::Bank(msg))
+    }
 
     let response: Response = Response::new()
-        .add_messages(amount)
+        .add_messages(messages)
         .add_attribute("action", "withdraw_funds");
     Ok(response)
 }

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, BankMsg, Coin};
+use cosmwasm_std::{Addr, Coin, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -10,14 +10,15 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     Disperse {
         accounts: Vec<Addr>,
-        amounts: Vec<Coin>,
+        amounts: Vec<Uint128>,
     },
     DisperseSameValue {
         accounts: Vec<Addr>,
-        amount: Coin,
+        amount: Uint128,
     },
     WithdrawFunds {
-        amount: Vec<BankMsg>,
+        accounts: Vec<Addr>,
+        amounts: Vec<Coin>,
     },
     UpdateAdmin {
         new_admin: Addr,
